@@ -32,7 +32,7 @@ pfn_t tlb_lookup(vpn_t vpn, int write) {
       tlb[i].used = 1;
       pfn = tlb[i].pfn;
       // goto hitHouseKeeping;
-      return tlb[i].pfn; 
+      return pfn; 
       /* return pfn here so the rest no need to run */ 
     }
    } 
@@ -40,7 +40,7 @@ pfn_t tlb_lookup(vpn_t vpn, int write) {
 
    /* If it does not exist (it was not a hit), call the page table reader */
    pfn = pagetable_lookup(vpn, write);
-   //HOUSEKEEPING is done here. In the pagetable_lookup(), if it found a valid pte. It will updates its information 
+   //!HOUSEKEEPING is done here. In the pagetable_lookup(), if it found a valid pte. It will updates its information 
    //including used, dirty.
    //pagetable_lookup might encounter page fault, in which case the page table will be updated
 
@@ -58,9 +58,8 @@ pfn_t tlb_lookup(vpn_t vpn, int write) {
         tlb[i].valid = 1;
         tlb[i].used = 1;
         tlb[i].dirty = write;
-        //we already did houseKeeping in pagetable_lookup()
-        return pfn;
-
+        //!we already did houseKeeping in pagetable_lookup()
+        goto housekeeping;
       }
     }
 
@@ -72,8 +71,8 @@ pfn_t tlb_lookup(vpn_t vpn, int write) {
         tlb[i].valid = 1;
         tlb[i].used = 1;
         tlb[i].dirty = write;
-        //we already did houseKeeping in pagetable_lookup()
-        return pfn;
+        //!we already did houseKeeping in pagetable_lookup()
+        goto housekeeping;
       } else {
         tlb[i].used = 0;
         i++;
@@ -81,6 +80,10 @@ pfn_t tlb_lookup(vpn_t vpn, int write) {
       }
     }
 
+    housekeeping: 
+    current_pagetable[vpn].used = 1;
+    current_pagetable[vpn].dirty = write;
+    return pfn;
 
 
   // //I am quite confused about this part
